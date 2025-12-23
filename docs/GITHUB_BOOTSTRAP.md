@@ -15,7 +15,7 @@ export GITHUB_PAT=YOUR_TOKEN
 python tools/github_bootstrap.py \
   --config tools/github_bootstrap_config.json \
   --org YOUR_ORG \
-  --repo long-horizon-llm-harness
+  --repo llm-harness
 ```
 
 If you are using a personal account, omit `--org` and use `--owner` or let the script infer the owner.

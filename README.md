@@ -1,4 +1,4 @@
-# long-horizon-llm-harness
+# llm-harness
 
 This repository is a long-horizon LLM engineering harness. It is intentionally
 named like a resume builder but the real mission is to facilitate the design,

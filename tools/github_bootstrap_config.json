@@ -6,7 +6,7 @@
     "team_id": null
   },
   "repo": {
-    "name": "long-horizon-llm-harness",
+    "name": "llm-harness",
     "owner": "",
     "visibility": "public",
     "description": "Long-horizon LLM training and testing harness",
