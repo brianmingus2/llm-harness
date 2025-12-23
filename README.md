@@ -1,6 +1,6 @@
 # llm-harness
 
-This repository is a long-horizon LLM engineering harness. It is intentionally
+This repository is an LLM engineering harness for long-run autonomy. It is intentionally
 named like a resume builder but the real mission is to facilitate the design,
 training, and testing of LLM agents that must operate reliably for hours, days,
 weeks, or longer without human intervention. The harness emphasizes strict
@@ -18,7 +18,7 @@ in `scripts/`, which will further strengthen long-run reliability.
 
 ## Key capabilities
 
-- **Long-horizon harness protocol**: `AGENTS.md` defines a finite-state
+- **Harness protocol**: `AGENTS.md` defines a finite-state
   workflow with strict gates, requirement tracking, and persistent memory.
 - **Coverage-driven simulation**: `--maximum-coverage` exercises UI state,
   DB paths, PDF generation, and failure handling.
@@ -30,7 +30,7 @@ in `scripts/`, which will further strengthen long-run reliability.
 
 ## Project structure
 
-- `AGENTS.md`: Long-horizon protocol and gates for autonomous agents.
+- `AGENTS.md`: Harness protocol and gates for autonomous agents.
 - `harness.py`: CLI entrypoint for tests, coverage, and PDF generation.
 - `lib.typ`: Typst resume template and layout logic.
 - `docs/`: Protocol state, requirements, plans, and logs.
@@ -49,7 +49,7 @@ python harness.py --run-all-tests
 python harness.py --compile-pdf /tmp/preview.pdf
 ```
 
-## Long-horizon guidance
+## Agent guidance
 
 This repo is designed for long-run autonomous agent work. If you are using an
 agent (Codex, Gemini CLI, Cursor, etc.), read and follow `AGENTS.md`. It defines
@@ -74,7 +74,7 @@ you want them removed.
 
 ## Status
 
-UI automation in `scripts/` is actively evolving. The long-horizon harness is
+UI automation in `scripts/` is actively evolving. The harness is
 stable and focused on maximum coverage, reproducibility, and strict gatekeeping.
 
 ## License
