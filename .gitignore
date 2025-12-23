@@ -10,6 +10,18 @@
 __pycache__/
 assets_out/
 maxcov_logs/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.pyre/
+.pyre_configuration
+.semgrep.yml
+.semgrep.yaml
+.coverage.*
+diagrams/
+maxcov_raster_*/
+.venv/
+venv/
 
 # Python bytecode
 *.py[cod]
@@ -34,6 +46,7 @@ packages/
 fonts/Font Awesome 7*.otf
 
 # Temporary files created by the agent or during development
+*~
 .env
 .env.*
 .tmp_*.png

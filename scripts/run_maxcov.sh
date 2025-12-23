@@ -8,7 +8,7 @@ mkdir -p "${LOG_DIR}"
 
 export MAX_COVERAGE_CONTAINER="1"
 export MAX_COVERAGE_LOG="1"
-export MAX_COVERAGE_STUB_DB="0"
+export MAX_COVERAGE_STUB_DB="1"
 
-python harness.py --maximum-coverage 2>&1 | tee "${LOG_FILE}"
+python harness.py --run-all-tests 2>&1 | tee "${LOG_FILE}"
 exit "${PIPESTATUS[0]}"

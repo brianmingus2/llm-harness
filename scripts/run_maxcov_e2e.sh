@@ -6,7 +6,7 @@ usage() {
 Usage: scripts/run_maxcov_e2e.sh --force
 
 Runs a full Docker reset, builds the maxcov image, executes maximum coverage,
-captures the coverage summary, then resets Docker again.
+executes run-all-tests, captures the coverage summary, then resets Docker again.
 
 WARNING: This deletes ALL Docker containers, images, volumes, and networks
 on this machine.
@@ -50,6 +50,13 @@ cd "${root_dir}"
 log_file="${root_dir}/maxcov_logs/maximum_coverage.log"
 summary_file="${root_dir}/maxcov_logs/maximum_coverage.summary.txt"
 
+ensure_log_dir() {
+  ${SUDO} mkdir -p "${root_dir}/maxcov_logs"
+  if [[ -n "${SUDO}" ]]; then
+    ${SUDO} chown -R "$(id -u):$(id -g)" "${root_dir}/maxcov_logs"
+  fi
+}
+
 nuke_docker() {
   local ids=""
   ids="$(${SUDO} docker ps -aq || true)"
@@ -75,7 +82,7 @@ nuke_docker() {
   ${SUDO} docker system prune -af --volumes || true
 }
 
-mkdir -p "${root_dir}/maxcov_logs"
+ensure_log_dir
 
 start_ts="$(date -u +%s)"
 echo "[e2e] docker reset (pre)"
@@ -84,10 +91,11 @@ nuke_docker
 echo "[e2e] build maxcov image"
 ${SUDO} docker compose build --no-cache maxcov
 
-echo "[e2e] run maximum coverage"
+echo "[e2e] run all tests"
 ${SUDO} docker compose run --rm -T maxcov
 
 echo "[e2e] capture coverage summary"
+ensure_log_dir
 summary_line="$(grep -a "Coverage (harness.py)" "${log_file}" | tail -n 1 || true)"
 end_ts="$(date -u +%s)"
 duration_s=$(( end_ts - start_ts ))

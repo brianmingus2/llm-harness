@@ -1,0 +1,61 @@
+# REQUIREMENTS
+
+## Task Request (verbatim)
+- "Add more optional scanners (e.g., codespell, pip-audit, safety, pyupgrade)"
+- "gracefully skips missing tools is against our ethos"
+- "also fix the pip-audit timeout. timeouts are against our ethos"
+- "pytype timing out must be fixed correctly"
+- "also add all of the best python tools for generating all manner of diagrams. put the renders in diagrams/"
+- "A great way to make sure everything is getting installed properly is to run the tests the right way, by invoking scripts/run_maxcov_e2e.sh --force - of course, you'll need to update that to run --run-all-tests intead of just --maximum-coverage. In order to get that passing, you'll have to update the Dockerfile to install literally everything we need"
+- "The code my reference a \"brian_mingus_resume.json\". That should go away, and be replaced with a \"michael_scott_resume.json\". It should fully exercise the capabilities of the resume builder."
+- "Make sure that you don't overwrite my resume in the database. Use an ephemeral container for dev/test"
+- "The reason we are adding support for this json file is so that real users can have an LLM convert their resume to the json format, and then use a CLI arg to load it into Neo4J. But, in addition to that, we want the test suite to have real resume data ie Michael Scott's resume data."
+- "Make the PDF and look at it with your Vision"
+- "His long name \"Michael Gary Scott\" wraps and looks wrong. It should fit all on a line. If you put the quote-unquote z-index of the name in Typst to be the top-most element, situated atop everything else, that should prevent wrapping. Also, perhaps the container holding the name needs to accomodate wider names."
+
+## Checklist
+- [x] REQ-001: Add optional scanners (codespell, pip-audit, safety, pyupgrade) to the static analysis suite and include them in run-all-tests output.
+  - Files: harness.py, requirements.txt
+  - Notes: pyupgrade must not mutate working files; scanners should report failures if required tools are missing.
+- [x] REQ-002: Enforce that missing static analysis tools are not skipped (treat as failures).
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-003: Remove pip-audit subprocess timeout (or otherwise ensure it does not time out).
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-004: Run python harness.py --run-all-tests and record results.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-005: Ensure pytype does not time out during static analysis runs.
+  - Files: harness.py
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-006: Ensure diagram tooling is installed and diagrams are rendered into diagrams/ as part of the full test flow.
+  - Files: scripts/generate_diagrams.py, harness.py, requirements.txt, Dockerfile
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:03:55Z)
+- [x] REQ-007: Update scripts/run_maxcov_e2e.sh to run --run-all-tests and capture results from that flow.
+  - Files: scripts/run_maxcov_e2e.sh, scripts/run_maxcov.sh
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:22:27Z)
+- [x] REQ-008: Update Dockerfile to install all dependencies required by run-all-tests (UI, PDF, static tools, diagram generation).
+  - Files: Dockerfile, requirements.txt
+  - Evidence: docs/TEST_LOG.md (2025-12-23T10:22:27Z)
+- [x] REQ-009: Replace brian_mingus_resume.json with michael_scott_resume.json and update default asset references.
+  - Files: harness.py, michael_scott_resume.json
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-010: Seed full Michael Scott + David Brent resume data to exercise the resume builder (profile, skills, experience, education, founder roles, custom sections), using ASCII-only content.
+  - Files: michael_scott_resume.json
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-011: Ensure asset imports via CLI are safe for real users (do not overwrite existing resumes without explicit override) and document the import workflow.
+  - Files: harness.py, docs/CONFIGURATION.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-012: Keep dev/test runs isolated from user data (ephemeral or stub DB for test flows).
+  - Files: harness.py, scripts/run_maxcov.sh, docs/TESTING.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-013: Run python harness.py --run-all-tests and record results for the new resume asset changes.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:44:16Z)
+- [x] REQ-014: Compile the Michael Scott resume PDF using a stubbed DB and perform a vision review of the rendered output.
+  - Files: docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T11:53:38Z)
+- [x] REQ-015: Ensure long resume names (e.g., "Michael Gary Scott") render on a single line in Typst by adjusting header layout and layering.
+  - Files: lib.typ, docs/TEST_LOG.md, docs/AGENT_STATE.md
+  - Evidence: docs/TEST_LOG.md (2025-12-23T12:20:44Z)

@@ -1,0 +1,285 @@
+{
+  "profile": {
+    "id": "resume-michael-scott",
+    "name": "Michael Gary Scott",
+    "first_name": "Michael",
+    "middle_name": "Gary",
+    "last_name": "Scott",
+    "email": "michael.scott@dundermifflin.com",
+    "phone": "555-0100",
+    "font_family": "Avenir LT Std",
+    "auto_fit_target_pages": 2,
+    "auto_fit_best_scale": 1.0,
+    "auto_fit_too_long_scale": 0.0,
+    "linkedin_url": "linkedin.com/in/michael-scott",
+    "github_url": "git.new/michael-scott",
+    "calendly_url": "https://cal.link/michael-scott",
+    "portfolio_url": "https://ggl.link/papers",
+    "summary": "Long-tenured paper-industry leader with a career beginning April 1992 at Dunder Mifflin and culminating in years as regional manager of the Scranton branch. Recognized in-episode for elite sales performance (Top Salesman awards), high-impact client acquisition, and branch performance strong enough to draw corporate attention. Demonstrated entrepreneurial initiative by founding a competing paper company and negotiating a return-to-company outcome that included reinstatement and benefits. Known for high-energy culture programming, internal awards events, and extensive creative output (film, parody songwriting).",
+    "head1_left": "Michael Gary Scott",
+    "head1_middle": "Regional Manager (Paper Sales)",
+    "head1_right": "Scranton, PA",
+    "head2_left": "Dunder Mifflin - Scranton Branch",
+    "head2_middle": "Sales Leader | Entrepreneur | Amateur Filmmaker",
+    "head2_right": "Office: Dunder Mifflin Scranton",
+    "head3_left": "Threat Level: Midnight (Feature Film)",
+    "head3_middle": "Somehow I Manage (Book in Progress)",
+    "head3_right": "Host / MC",
+    "top_skills": [
+      "Sales Leadership",
+      "Client Acquisition",
+      "Negotiation",
+      "Branch Operations",
+      "Culture Building",
+      "Event Hosting",
+      "Creative Direction",
+      "Scriptwriting",
+      "Business Development"
+    ],
+    "section_order": [
+      "summary",
+      "matrices",
+      "education",
+      "education_continued",
+      "experience",
+      "founder",
+      "career_highlights",
+      "marketing_promotions",
+      "publications_creative",
+      "community_service",
+      "awards_recognition",
+      "notable_facts",
+      "us_continuity_ats",
+      "uk_continuity",
+      "uk_continuity_ats",
+      "references"
+    ],
+    "section_enabled": [
+      "summary",
+      "matrices",
+      "education",
+      "education_continued",
+      "experience",
+      "founder",
+      "career_highlights",
+      "marketing_promotions",
+      "publications_creative",
+      "community_service",
+      "awards_recognition",
+      "notable_facts",
+      "us_continuity_ats",
+      "uk_continuity",
+      "uk_continuity_ats",
+      "references"
+    ],
+    "section_titles_json": {},
+    "custom_sections_json": [
+      {
+        "id": "custom-career-highlights",
+        "key": "career_highlights",
+        "title": "Career Highlights & Accomplishments",
+        "body": "Sales & Revenue Impact: Earned Top Salesman of the Year awards (1996, 1997).\nSales & Revenue Impact: Claimed responsibility for roughly half of branch clients.\nSales & Revenue Impact: Secured a major client through unorthodox methods during a high-stakes pitch.\nLeadership & Operations: Led the branch during its best-performing period and delivered a corporate lecture tour.\nLeadership & Operations: Negotiated reinstatement and benefits for a three-person team after launching a competitor.\nLeadership & Operations: Accepted a co-manager structure to retain key talent.\nEntrepreneurship & Negotiation: Founded the Michael Scott Paper Company and forced a corporate buyout decision.\nMarketing & Promotions: Produced an alternate local TV commercial and debuted it internally.\nMarketing & Promotions: Launched the Golden Ticket discount program and managed executive escalation.\nCulture & Events Leadership: Created and hosted The Dundies awards program.\nCommunity: Organized a tsunami relief fun-raiser.\nCommunity: Scott's Tots tuition pledge initiative; later delivered an accountability visit and partial support."
+      },
+      {
+        "id": "custom-marketing-promotions",
+        "key": "marketing_promotions",
+        "title": "Marketing & Promotions Portfolio",
+        "body": "Local TV Commercial (Alternate Cut) - produced a complete Dunder Mifflin spot with custom animation.\nGolden Ticket Discount Program - conceived customer discount promotion and managed executive scrutiny.\nRelationship-forward client outreach scripts and phone campaigns."
+      },
+      {
+        "id": "custom-publications-creative",
+        "key": "publications_creative",
+        "title": "Publications & Creative Works",
+        "body": "Somehow I Manage - management book drafted and later gifted as a physical copy.\nThreat Level: Midnight - feature film written, shot, re-shot, edited, and screened.\nSong parodies and original comedy songs performed across events.\nSelf-reported HBO comedy special: Here I Go Again..."
+      },
+      {
+        "id": "custom-community-service",
+        "key": "community_service",
+        "title": "Community & Service",
+        "body": "Scott's Tots - 10-year tuition pledge; returned to provide partial remedies and accountability.\nTsunami Relief Fun-raiser - morale-oriented fundraising event tied to The Dundies."
+      },
+      {
+        "id": "custom-awards-recognition",
+        "key": "awards_recognition",
+        "title": "Awards & Recognition",
+        "body": "Top Salesman of the Year awards (1996, 1997).\nBranch best-performing recognition and HQ inquiry.\nPerformance bonus: $3,000 tied to budget outcomes."
+      },
+      {
+        "id": "custom-notable-facts",
+        "key": "notable_facts",
+        "title": "Additional Notable Facts",
+        "body": "Childhood appearance on Fundle Bundle.\nHockey participation with a claimed scoring record.\nCompleted a 25 push-up challenge plus one modified push-up.\nTenure claimed as 9,986,000 minutes at Dunder Mifflin (start April 1992)."
+      },
+      {
+        "id": "custom-us-continuity-ats",
+        "key": "us_continuity_ats",
+        "title": "US Continuity - ATS Version",
+        "body": "Summary: Paper-industry manager and sales leader since 1992; Top Salesman awards; best-performing branch leadership; competitor founded and negotiated return with benefits.\nCore Strengths: Sales leadership, negotiation, culture-building, marketing experimentation, creative production.\nExperience: Dunder Mifflin Scranton - regional manager; hosted The Dundies; led best-performing branch.\nExperience: Michael Scott Paper Company - founder; captured core clients; negotiated buyout.\nExperience: Dunder Mifflin Sales - Top Salesman 1996/1997; major client win.\nSelected Projects: Alternate local TV commercial; Threat Level: Midnight; Somehow I Manage.\nEducation/Training: Improv class participation; no completed college."
+      },
+      {
+        "id": "custom-uk-continuity",
+        "key": "uk_continuity",
+        "title": "UK Continuity - David Brent",
+        "body": "General manager of Wernham Hogg - Slough branch; later traveling salesman after dismissal.\nAccepted a promotion to avoid downsizing, then reversed after a medical exam.\nPerformed original music on-screen including Freelove Freeway.\nLeveraged documentary notoriety into paid appearances.\nCross-version appearances in US series: The Seminar and Search Committee."
+      },
+      {
+        "id": "custom-uk-continuity-ats",
+        "key": "uk_continuity_ats",
+        "title": "UK Continuity - ATS Version",
+        "body": "Summary: Wernham Hogg general manager turned traveling salesman; onscreen original music; documentary-driven visibility.\nExperience: Wernham Hogg - Slough Branch (General Manager).\nExperience: Traveling Sales - post-dismissal (Christmas Specials).\nHighlights: Promotion accepted then reversed; Freelove Freeway performance; US series appearances."
+      },
+      {
+        "id": "custom-references",
+        "key": "references",
+        "title": "References",
+        "body": "Available upon request (Scranton branch staff; Dunder Mifflin corporate leadership; Michael Scarn's robot butler)."
+      }
+    ],
+    "prompt_yaml": ""
+  },
+  "experience": [
+    {
+      "id": "exp-dm-manager",
+      "company": "Dunder Mifflin Paper Company - Scranton Branch",
+      "role": "Regional Manager",
+      "location": "Scranton, PA",
+      "description": "Led branch operations, sales leadership, and culture programs.",
+      "bullets": [
+        "Led the branch during a best-performing period and delivered a corporate lecture tour.",
+        "Negotiated reinstatement and benefits for a three-person team after launching a competitor.",
+        "Created and hosted The Dundies awards to reinforce culture and retention.",
+        "Produced an alternate local TV commercial and coordinated creative assets.",
+        "Launched the Golden Ticket promotion and managed executive escalation."
+      ],
+      "start_date": "2001-01-01",
+      "end_date": "2013-05-16"
+    },
+    {
+      "id": "exp-mspc-founder",
+      "company": "The Michael Scott Paper Company",
+      "role": "Founder / Lead Sales Negotiator",
+      "location": "Scranton, PA",
+      "description": "Built a competitor, captured core clients, and negotiated a return-to-company deal.",
+      "bullets": [
+        "Captured a majority of branch clients, forcing a corporate buyout decision.",
+        "Negotiated return-to-company terms with benefits instead of a cash payout."
+      ],
+      "start_date": "2009-03-01",
+      "end_date": "2009-04-15"
+    },
+    {
+      "id": "exp-dm-sales",
+      "company": "Dunder Mifflin Paper Company",
+      "role": "Salesman",
+      "location": "Scranton, PA",
+      "description": "Account executive focused on client acquisition and retention.",
+      "bullets": [
+        "Earned Top Salesman awards (1996, 1997).",
+        "Secured a major client through a high-stakes pitch.",
+        "Maintained a large share of branch clients; claimed half of the client base.",
+        "Converted hesitant prospects through persistent relationship-first outreach."
+      ],
+      "start_date": "1992-04-01",
+      "end_date": "2001-12-31"
+    },
+    {
+      "id": "exp-telemarketer",
+      "company": "Telemarketing (Second Job)",
+      "role": "Telemarketer",
+      "location": "Scranton, PA",
+      "description": "Supplemental income role taken during personal debt period.",
+      "bullets": [
+        "Balanced dual roles while maintaining full-time sales responsibilities."
+      ],
+      "start_date": "2006-01-01",
+      "end_date": "2006-06-01"
+    }
+  ],
+  "education": [
+    {
+      "id": "edu-improv",
+      "school": "Scranton Improv Workshop",
+      "degree": "Improv Training (Certificate; performance and sketch work)",
+      "location": "Scranton, PA",
+      "description": "Completed improv class as shown in E-Mail Surveillance.",
+      "bullets": [
+        "Scene work and character exercises.",
+        "Team improv and audience engagement."
+      ],
+      "start_date": "2004-05-01",
+      "end_date": "2004-05-30"
+    },
+    {
+      "id": "edu-leadership",
+      "school": "Dunder Mifflin Corporate",
+      "degree": "Leadership Development (Internal seminar; coaching, budgeting, HR basics)",
+      "location": "New York, NY",
+      "description": "Branch leadership program for regional managers.",
+      "bullets": [
+        "Branch performance reporting.",
+        "Conflict management basics."
+      ],
+      "start_date": "2006-01-15",
+      "end_date": "2006-02-15"
+    },
+    {
+      "id": "edu-community-college",
+      "school": "Lackawanna Community College",
+      "degree": "Business Coursework (unfinished; tuition lost to pyramid scheme)",
+      "location": "Scranton, PA",
+      "description": "No degree completed.",
+      "bullets": [
+        "Intro to business and sales basics (partial)."
+      ],
+      "start_date": "1982-09-01",
+      "end_date": "1983-05-15"
+    }
+  ],
+  "founder_roles": [
+    {
+      "id": "founder-mspc",
+      "company": "The Michael Scott Paper Company",
+      "role": "Founder / Owner",
+      "location": "Scranton, PA",
+      "description": "Independent paper company built to compete with former employer.",
+      "bullets": [
+        "Recruited a three-person team and built a client list quickly.",
+        "Negotiated acquisition terms to preserve jobs and benefits."
+      ],
+      "start_date": "2009-03-01",
+      "end_date": "2009-04-15"
+    }
+  ],
+  "skills": [
+    {
+      "category": "Sales Leadership",
+      "skills": [
+        {"id": "skill-sales-1", "name": "Client Acquisition"},
+        {"id": "skill-sales-2", "name": "Account Management"},
+        {"id": "skill-sales-3", "name": "Negotiation"},
+        {"id": "skill-sales-4", "name": "Territory Growth"},
+        {"id": "skill-sales-5", "name": "Pipeline Discipline"}
+      ]
+    },
+    {
+      "category": "Operations & People",
+      "skills": [
+        {"id": "skill-ops-1", "name": "Branch Operations"},
+        {"id": "skill-ops-2", "name": "Team Coaching"},
+        {"id": "skill-ops-3", "name": "Culture Programs"},
+        {"id": "skill-ops-4", "name": "Event Hosting"},
+        {"id": "skill-ops-5", "name": "Budget Stewardship"}
+      ]
+    },
+    {
+      "category": "Creative & Marketing",
+      "skills": [
+        {"id": "skill-creative-1", "name": "Commercial Production"},
+        {"id": "skill-creative-2", "name": "Scriptwriting"},
+        {"id": "skill-creative-3", "name": "Campaign Design"},
+        {"id": "skill-creative-4", "name": "Public Speaking"},
+        {"id": "skill-creative-5", "name": "Brand Promotions"}
+      ]
+    }
+  ]
+}

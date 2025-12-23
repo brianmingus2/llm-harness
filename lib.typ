@@ -330,13 +330,20 @@
   }
 
   let name = block[
-    #set text(size: default-body-size * 2.6, style: "normal", font: header-font)
-    #if language == "zh" or language == "ja" [
-      #text(accent-color, weight: "bold")[#author.lastname]#text(weight: "regular")[
-        #author.firstname
+    #set text(
+      size: default-body-size * 2.6,
+      style: "normal",
+      font: header-font,
+      hyphenate: false,
+    )
+    #box[
+      #if language == "zh" or language == "ja" [
+        #text(accent-color, weight: "bold")[#author.lastname]#text(weight: "regular")[
+          #author.firstname
+        ]
+      ] else [
+        #text(accent-color, weight: 500)[#author.firstname] #text(weight: 800)[#author.lastname]
       ]
-    ] else [
-      #text(accent-color, weight: 500)[#author.firstname] #text(weight: 800)[#author.lastname]
     ]
   ]
 
@@ -519,10 +526,8 @@
 
     #pad(bottom: header-rule-gap + header-rule-below)[
       #grid(
-        columns: (1fr, auto),
-        gutter: 12pt,
-        align(left + top)[#move(dy: header-name-dy)[#name]],
-        align(right + top)[#contacts],
+        columns: (1fr),
+        align(right + top)[#move(dy: header-rule-gap + header-rule-below - 0.6em)[#contacts]],
       )
 
       #if has-positions or has-address [
@@ -534,6 +539,10 @@
             align(right)[#address],
           )
         ]
+      ]
+
+      #place(bottom + left)[
+        #move(dy: -header-rule-below + 0.4em)[#name]
       ]
     ]
   ]

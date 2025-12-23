@@ -39,3 +39,9 @@ This repo uses environment variables for provider keys, database settings, and l
 - `REFLEX_APP_URL`
 
 For the full set of switches, refer to the CLI help in `harness.py`.
+
+## Resume assets
+
+- Import a resume JSON file with `python harness.py --import-assets path/to/resume.json`.
+- Use `--overwrite-resume` to replace an existing Resume node; otherwise imports refuse to overwrite.
+- `michael_scott_resume.json` is the reference asset schema used for tests.

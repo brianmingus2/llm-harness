@@ -1,0 +1,38 @@
+# TEST_LOG
+
+## Latest Runs
+- 2025-12-23T07:44:22Z: python -m py_compile harness.py (pass)
+- 2025-12-23T07:44:22Z: python harness.py --run-all-tests (pass, 5m 4.8s)
+  - Notes: maximum-coverage ok (4m 15.7s); reflex run clean start ok; ui-playwright-check ok.
+  - Static warnings: black reformat=4, isort files=3, mypy errors=249, flake8 issues=1034, pyright issues=448, pytype errors=2, deptry issues=8, bandit issues=144, xenon violations=111.
+  - Static skips: codespell, pip-audit, safety, semgrep, pyupgrade, pyre, mccabe, lizard, interrogate missing.
+- 2025-12-23T09:34:46Z: python -m py_compile harness.py (pass)
+- 2025-12-23T09:34:46Z: python harness.py --run-all-tests (pass, 5m 43.7s)
+  - Notes: maximum-coverage ok (4m 34.2s); diagram generation ok (28.6s); reflex run clean start ok; ui-playwright-check ok.
+  - Static warnings: black reformat=4, isort files=3, mypy errors=253, flake8 issues=1036, pyflakes issues=3, pycodestyle issues=678, pydocstyle issues=224, codespell issues=5, pyright issues=448, pytype errors=2, pyre errors=154, vulture unused=31, bandit issues=146, deptry issues=31, pyupgrade rc=1, mccabe complex=26, xenon violations=111, lizard lines=825.
+  - Static parse issues: pip-audit parse=error, safety parse=error, semgrep parse=error.
+- 2025-12-23T09:34:46Z: scripts/run_maxcov_e2e.sh --force (blocked: sudo password prompt required for docker)
+- 2025-12-23T10:01:25Z: python -m py_compile harness.py (pass)
+- 2025-12-23T10:01:25Z: python harness.py --run-all-tests (pass, 5m 13.9s)
+  - Notes: maximum-coverage ok (4m 8.8s); diagram generation ok (25.8s); reflex run clean start ok; ui-playwright-check ok.
+  - Static warnings: black reformat=4, isort files=3, mypy errors=253, flake8 issues=1036, pyflakes issues=3, pycodestyle issues=678, pydocstyle issues=224, codespell issues=5, pyright issues=448, pytype errors=2, pyre errors=153, vulture unused=31, bandit issues=147, deptry issues=31, pyupgrade rc=1, mccabe complex=26, xenon violations=111, lizard lines=825.
+  - Static issues: pip-audit issues=1; safety issues=0; semgrep issues=0.
+- 2025-12-23T10:03:55Z: python -m py_compile harness.py (pass)
+- 2025-12-23T10:03:55Z: python harness.py --run-all-tests (pass, 5m 13.9s)
+  - Notes: maximum-coverage ok (4m 8.8s); diagram generation ok (25.8s); reflex run clean start ok; ui-playwright-check ok.
+  - Static warnings: black reformat=4, isort files=3, mypy errors=253, flake8 issues=1036, pyflakes issues=3, pycodestyle issues=678, pydocstyle issues=224, codespell issues=5, pyright issues=448, pytype errors=2, pyre errors=153, vulture unused=31, bandit issues=147, deptry issues=31, pyupgrade rc=1, mccabe complex=26, xenon violations=111, lizard lines=825.
+  - Static issues: pip-audit issues=1; safety issues=0; semgrep issues=0.
+- 2025-12-23T10:22:27Z: scripts/run_maxcov_e2e.sh --force (pass)
+  - Notes: docker run-all-tests PASS (4m 35.0s); diagram generation ok (18.5s); reflex run clean start ok; ui-playwright-check ok; coverage summary captured to maxcov_logs/maximum_coverage.summary.txt.
+  - Static warnings: black reformat=4, isort files=3, mypy errors=253, flake8 issues=682, pyflakes issues=3, pycodestyle issues=678, pydocstyle issues=224, codespell issues=5, pyright issues=444, pytype errors=2, pyre errors=3, vulture unused=31, bandit issues=147, deptry issues=31, pyupgrade rc=1, mccabe complex=26, xenon violations=111, lizard lines=825.
+  - Static issues: pip-audit issues=1; safety issues=0; semgrep parse=error.
+- 2025-12-23T11:44:16Z: python -m py_compile harness.py (pass)
+- 2025-12-23T11:44:16Z: python harness.py --run-all-tests (pass, 9m 43.1s)
+  - Notes: maximum-coverage ok (7m 33.7s); diagram generation ok (50.7s); reflex run clean start ok; ui-playwright-check ok.
+  - Static warnings: black reformat=4, isort files=3, mypy errors=254, flake8 issues=1037, pyflakes issues=3, pycodestyle issues=679, pydocstyle issues=226, codespell issues=5, pyright issues=449, pytype errors=2, pyre errors=163, vulture unused=31, bandit issues=147 (HIGH=1, MEDIUM=4, LOW=142), deptry issues=31, pyupgrade rc=1, mccabe complex=26, xenon violations=111, lizard lines=826, pip-audit issues=1.
+- 2025-12-23T11:53:38Z: MAX_COVERAGE_STUB_DB=1 python harness.py --compile-pdf /tmp/michael_scott_resume.pdf --auto-fit (pass)
+  - Notes: Rendered 3 pages (Letter); vision review performed on /tmp/michael_scott_resume_p1.png, /tmp/michael_scott_resume_p2.png, /tmp/michael_scott_resume_p3.png.
+- 2025-12-23T12:20:44Z: MAX_COVERAGE_STUB_DB=1 python harness.py --compile-pdf /tmp/michael_scott_resume_fix.pdf --auto-fit (pass)
+  - Notes: Updated Typst header layout to keep long names on one line; vision check of /tmp/michael_scott_resume_fix_p1.png confirms "Michael Gary Scott" stays on one line.
+- 2025-12-23T12:20:44Z: python harness.py --run-all-tests (pass, 6m 34.5s)
+  - Notes: maximum-coverage ok (4m 33.7s); diagram generation ok (44.9s); reflex run clean start ok; ui-playwright-check ok.

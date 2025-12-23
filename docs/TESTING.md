@@ -29,6 +29,7 @@ Note: `scripts/` is actively evolving for UI coverage and long-run checks. Avoid
 - `--maximum-coverage` exercises UI state transitions, DB paths, and PDF branches.
 - `REFLEX_COVERAGE=1` enables per-worker coverage tracking.
 - `MAX_COVERAGE_LOG=1` emits detailed progress logs (useful for long runs).
+- `--run-all-tests` runs the UI flow with `MAX_COVERAGE_STUB_DB=1` to avoid touching user data.
 
 ## Failure path simulation
 

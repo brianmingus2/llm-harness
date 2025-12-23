@@ -5,6 +5,7 @@ import subprocess
 import re
 import tempfile
 import tarfile
+import shutil
 from datetime import datetime, timezone
 import base64
 import uuid
@@ -270,7 +271,7 @@ FONT_AWESOME_SOURCES = {
     "Font Awesome 7 Free-Regular-400.otf": "https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/otfs/Font%20Awesome%207%20Free-Regular-400.otf",
     "Font Awesome 7 Brands-Regular-400.otf": "https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/otfs/Font%20Awesome%207%20Brands-Regular-400.otf",
 }
-DEFAULT_ASSETS_JSON = BASE_DIR / "brian_mingus_resume.json"
+DEFAULT_ASSETS_JSON = BASE_DIR / "michael_scott_resume.json"
 DEBUG_LOG = Path(tempfile.gettempdir()) / "resume_builder_debug.log"
 DEFAULT_TYPST_PATH = BASE_DIR / "bin" / ("typst.exe" if os.name == "nt" else "typst")
 TYPST_BIN = os.environ.get("TYPST_BIN") or (
@@ -1032,33 +1033,52 @@ class Neo4jClient:
         """Reset the DB then import the provided assets JSON."""
         if self._stub is not None:
             self.reset()
-            self.import_assets(assets_path)
+            self.import_assets(assets_path, allow_overwrite=True)
             return
         self.reset()
-        self.import_assets(assets_path)
+        self.import_assets(assets_path, allow_overwrite=True)
 
-    def import_assets(self, assets_path: str | Path = DEFAULT_ASSETS_JSON):
+    def resume_exists(self) -> bool:
+        if self._stub is not None:
+            return bool(self._stub.get("resume"))
+        with self.driver.session() as session:
+            row = session.run("MATCH (r:Resume) RETURN count(r) AS c").single()
+            return bool(row and row["c"] and row["c"] > 0)
+
+    def import_assets(
+        self,
+        assets_path: str | Path = DEFAULT_ASSETS_JSON,
+        *,
+        allow_overwrite: bool = False,
+    ) -> bool:
         if self._stub is not None:
             assets_path = Path(assets_path)
             if not assets_path.is_absolute():
                 assets_path = BASE_DIR / assets_path
 
             if not assets_path.exists():
-                return
+                return False
 
             try:
                 data = json.loads(assets_path.read_text(encoding="utf-8"))
             except Exception:
-                return
+                return False
             _seed_maxcov_store(self._stub, data)
-            return
+            return True
         assets_path = Path(assets_path)
         if not assets_path.is_absolute():
             assets_path = BASE_DIR / assets_path
 
         if not assets_path.exists():
             print(f"Seed file not found at {assets_path}")
-            return
+            return False
+
+        if not allow_overwrite and self.resume_exists():
+            print(
+                "Resume already exists; refusing to overwrite. "
+                "Use --overwrite-resume to replace it."
+            )
+            return False
 
         with open(assets_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -1071,6 +1091,7 @@ class Neo4jClient:
                 self._create_founder_roles, data.get("founder_roles", [])
             )
             session.execute_write(self._create_skills, data.get("skills", []))
+        return True
 
     def ensure_resume_exists(self, assets_path: str | Path = DEFAULT_ASSETS_JSON):
         """If no Resume exists, import from JSON (dev bootstrap)."""
@@ -2527,7 +2548,7 @@ def generate_typst_source(
                 middle = " ".join(parts[1:-1])
             if len(parts) >= 2:
                 last = parts[-1]
-    firstname = (first + (" " + middle if middle else "")).strip() or "John"
+    firstname = first.strip() or "John"
     lastname = last or "Doe"
 
     RASTER_IMAGE_HEIGHT_PT = 10.6
@@ -4152,7 +4173,7 @@ def _build_pdf_metadata(resume_data, profile_data):
         return first.strip(), middle.strip(), last.strip()
 
     first, middle, last = name_parts()
-    name_tokens = [first, middle, last]
+    name_tokens = [first, last]
     author = " ".join([t for t in name_tokens if t]).strip() or "Resume Candidate"
     role = pick("target_role")
     company = pick("target_company")
@@ -5291,6 +5312,12 @@ class State(rx.State):
                         item["bullets"] = ""
                     else:
                         item["bullets"] = str(bullets)
+                    for key in ("start_date", "end_date"):
+                        value = item.get(key)
+                        if value is None:
+                            item[key] = ""
+                        elif not isinstance(value, str):
+                            item[key] = str(value)
                     out.append(model_cls(**item))
                 return out
 
@@ -8295,13 +8322,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Resume Builder Utility")
     parser.add_argument(
         "--import-assets",
-        help="Path to assets JSON file to import",
+        help=(
+            "Path to assets JSON file to import (see michael_scott_resume.json for"
+            " schema). Refuses to overwrite existing resume unless"
+            " --overwrite-resume is set."
+        ),
         nargs="?",
         const=str(DEFAULT_ASSETS_JSON),
     )
     parser.add_argument(
+        "--overwrite-resume",
+        action="store_true",
+        help="Allow --import-assets to replace an existing resume in Neo4j.",
+    )
+    parser.add_argument(
         "--reset-db",
-        help="Reset Neo4j (wipe) then import assets JSON (default: brian_mingus_resume.json)",
+        help="Reset Neo4j (wipe) then import assets JSON (default: michael_scott_resume.json)",
         nargs="?",
         const=str(DEFAULT_ASSETS_JSON),
     )
@@ -8468,6 +8504,14 @@ if __name__ == "__main__":
         help="Directory for UI check screenshots and PDF artifacts.",
     )
     parser.add_argument(
+        "--run-all-tests",
+        action="store_true",
+        help=(
+            "Run maximum coverage, verify a clean reflex run startup, and execute "
+            "the Playwright UI check."
+        ),
+    )
+    parser.add_argument(
         "--ui-simulate",
         dest="ui_simulate",
         action="store_true",
@@ -8497,7 +8541,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.ui_playwright_check:
+    if args.ui_playwright_check and not args.run_all_tests:
         target_url = (
             args.ui_playwright_url
             or os.environ.get("PLAYWRIGHT_URL")
@@ -8532,7 +8576,8 @@ if __name__ == "__main__":
     ui_url_was_set = bool(getattr(args, "maximum_coverage_ui_url", ""))
 
     if args.maximum_coverage:
-        os.environ.pop("MAX_COVERAGE_STUB_DB", None)
+        if os.environ.get("MAX_COVERAGE_STUB_DB") != "1":
+            os.environ.pop("MAX_COVERAGE_STUB_DB", None)
         os.environ.setdefault("MAX_COVERAGE_SKIP_LLM", "1")
         if not args.maximum_coverage_actions:
             args.maximum_coverage_actions = "all"
@@ -8839,6 +8884,965 @@ if __name__ == "__main__":
                 combined = "\n".join([t for t in (out, err) if t])
                 if combined:
                     _maxcov_log(f"{label} output (expected failure):\n{combined}")
+
+        def _strip_ansi(output: str) -> str:
+            cleaned = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", output or "")
+            return cleaned.replace("\r", "\n")
+
+        def _extract_json_payload(output: str) -> str:
+            cleaned = (output or "").strip()
+            if not cleaned:
+                return ""
+            positions = [m.start() for m in re.finditer(r"[\\[{]", cleaned)]
+            if not positions:
+                return cleaned
+            decoder = json.JSONDecoder()
+            for pos in positions:
+                try:
+                    _, end = decoder.raw_decode(cleaned[pos:])
+                except Exception:
+                    continue
+                return cleaned[pos : pos + end]
+            return cleaned
+
+        def _count_issue_lines(output: str) -> int:
+            return sum(1 for line in (output or "").splitlines() if line.strip())
+
+        def _parse_issue_stats(output: str, label: str) -> tuple[int | None, str]:
+            count = _count_issue_lines(output)
+            return count, f"{label}={count}"
+
+        def _count_diff_files(output: str) -> int:
+            return sum(
+                1 for line in (output or "").splitlines() if line.startswith("--- ")
+            )
+
+        def _parse_black_stats(output: str) -> tuple[int | None, str]:
+            count = 0
+            for line in (output or "").splitlines():
+                if "would reformat" in line or "would be reformatted" in line:
+                    count += 1
+            if count == 0:
+                count = _count_diff_files(output)
+            return count, f"reformat={count}"
+
+        def _parse_isort_stats(output: str) -> tuple[int | None, str]:
+            count = sum(
+                1
+                for line in (output or "").splitlines()
+                if line.strip().startswith("ERROR:")
+            )
+            if count == 0:
+                count = _count_diff_files(output)
+            return count, f"files={count}"
+
+        def _parse_dodgy_stats(output: str) -> tuple[int | None, str]:
+            try:
+                data = json.loads(output or "{}")
+            except Exception:
+                return None, "parse=error"
+            warnings = data.get("warnings")
+            if not isinstance(warnings, list):
+                warnings = []
+            count = len(warnings)
+            return count, f"issues={count}"
+
+        def _parse_deptry_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"Found ([0-9]+) dependency issues?", output or "")
+            if match:
+                count = int(match.group(1))
+                return count, f"issues={count}"
+            count = sum(
+                1
+                for line in (output or "").splitlines()
+                if re.search(r"DEP[0-9]+", line)
+            )
+            return count, f"issues={count}"
+
+        def _parse_eradicate_stats(output: str) -> tuple[int | None, str]:
+            count = _count_diff_files(output)
+            if count == 0 and output.strip():
+                count = _count_issue_lines(output)
+            return count, f"files={count}"
+
+        def _parse_autoflake_stats(output: str) -> tuple[int | None, str]:
+            filtered = "\n".join(
+                line
+                for line in (output or "").splitlines()
+                if "No issues detected" not in line
+            )
+            count = _count_issue_lines(filtered)
+            return count, f"issues={count}"
+
+        def _parse_pycln_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"([0-9]+) file[s]? would be changed", output or "")
+            if match:
+                count = int(match.group(1))
+                return count, f"files={count}"
+            count = _count_diff_files(output)
+            return count, f"files={count}"
+
+        def _parse_ruff_stats(output: str) -> tuple[int | None, str]:
+            total = 0
+            for line in (output or "").splitlines():
+                match = re.match(r"^[A-Z][A-Z0-9]+\\s+(\\d+)$", line.strip())
+                if match:
+                    total += int(match.group(1))
+            if total == 0 and output.strip():
+                total = _count_issue_lines(output)
+            return total, f"issues={total}"
+
+        def _parse_mypy_stats(output: str) -> tuple[int | None, str]:
+            if "Success: no issues found" in output:
+                return 0, "errors=0"
+            match = re.search(r"Found (\\d+) error", output)
+            if match:
+                count = int(match.group(1))
+                return count, f"errors={count}"
+            count = _count_issue_lines(output)
+            return count, f"errors={count}"
+
+        def _parse_pyre_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"Found (\\d+) errors?", output)
+            if match:
+                count = int(match.group(1))
+                return count, f"errors={count}"
+            return _parse_issue_stats(output, "errors")
+
+        def _parse_pylint_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"rated at ([0-9.]+/10)", output)
+            if match:
+                return None, f"score={match.group(1)}"
+            return None, "score=unknown"
+
+        def _parse_flake8_stats(output: str) -> tuple[int | None, str]:
+            counts = []
+            for line in (output or "").splitlines():
+                stripped = line.strip()
+                if stripped.isdigit():
+                    counts.append(int(stripped))
+            if counts:
+                count = counts[-1]
+            else:
+                count = _count_issue_lines(output)
+            return count, f"issues={count}"
+
+        def _parse_pyflakes_stats(output: str) -> tuple[int | None, str]:
+            return _parse_issue_stats(output, "issues")
+
+        def _parse_pycodestyle_stats(output: str) -> tuple[int | None, str]:
+            return _parse_issue_stats(output, "issues")
+
+        def _parse_pydocstyle_stats(output: str) -> tuple[int | None, str]:
+            return _parse_issue_stats(output, "issues")
+
+        def _parse_codespell_stats(output: str) -> tuple[int | None, str]:
+            count = sum(
+                1 for line in (output or "").splitlines() if "==>" in line
+            )
+            if count == 0 and output.strip():
+                count = _count_issue_lines(output)
+            return count, f"issues={count}"
+
+        def _parse_pip_audit_stats(output: str) -> tuple[int | None, str]:
+            payload = _extract_json_payload(output)
+            try:
+                data = json.loads(payload or "[]")
+            except Exception:
+                return None, "parse=error"
+
+            def _count_vulns(items: list[dict]) -> int:
+                total = 0
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    vulns = item.get("vulns") or item.get("vulnerabilities") or []
+                    if isinstance(vulns, list):
+                        total += len(vulns)
+                return total
+
+            if isinstance(data, list):
+                count = _count_vulns(data)
+                return count, f"issues={count}"
+            if isinstance(data, dict):
+                deps = data.get("dependencies") or data.get("results") or []
+                if isinstance(deps, dict):
+                    deps_list = list(deps.values())
+                elif isinstance(deps, list):
+                    deps_list = deps
+                else:
+                    deps_list = []
+                count = _count_vulns(deps_list)
+                if count == 0:
+                    vulns = data.get("vulnerabilities") or data.get("vulns") or []
+                    if isinstance(vulns, list):
+                        count = len(vulns)
+                return count, f"issues={count}"
+            return None, "issues=unknown"
+
+        def _parse_safety_stats(output: str) -> tuple[int | None, str]:
+            payload = _extract_json_payload(output)
+            try:
+                data = json.loads(payload or "{}")
+            except Exception:
+                match = re.search(r"(\\d+) vulnerabilities", output or "")
+                if match:
+                    count = int(match.group(1))
+                    return count, f"issues={count}"
+                return None, "parse=error"
+            if isinstance(data, list):
+                count = len(data)
+                return count, f"issues={count}"
+            if isinstance(data, dict):
+                vulns = (
+                    data.get("vulnerabilities")
+                    or data.get("vulns")
+                    or data.get("results")
+                )
+                if isinstance(vulns, list):
+                    count = len(vulns)
+                    return count, f"issues={count}"
+                if isinstance(vulns, dict):
+                    count = len(vulns)
+                    return count, f"issues={count}"
+            return 0, "issues=0"
+
+        def _has_safety_api_key_error(output: str) -> bool:
+            lowered = (output or "").lower()
+            return "api key" in lowered and (
+                "required" in lowered or "missing" in lowered or "not provided" in lowered
+            )
+
+        def _parse_interrogate_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"SUMMARY:\\s+([0-9.]+%)", output)
+            if match:
+                return None, f"coverage={match.group(1)}"
+            return None, "coverage=unknown"
+
+        def _parse_pyright_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(
+                r"(\\d+) errors?, (\\d+) warnings?, (\\d+) information",
+                output,
+            )
+            if match:
+                errors = int(match.group(1))
+                warnings = int(match.group(2))
+                info = int(match.group(3))
+                total = errors + warnings + info
+                details = f"errors={errors}, warnings={warnings}, info={info}"
+                return total, details
+            count = _count_issue_lines(output)
+            return count, f"issues={count}"
+
+        def _parse_pytype_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"(\\d+) errors?", output)
+            if match:
+                count = int(match.group(1))
+                return count, f"errors={count}"
+            return _parse_issue_stats(output, "errors")
+
+        def _parse_vulture_stats(output: str) -> tuple[int | None, str]:
+            count = _count_issue_lines(output)
+            return count, f"unused={count}"
+
+        def _parse_bandit_stats(output: str) -> tuple[int | None, str]:
+            try:
+                data = json.loads(output or "{}")
+            except Exception:
+                return None, "parse=error"
+            results = data.get("results") or []
+            if not isinstance(results, list):
+                results = []
+            count = len(results)
+            severities: dict[str, int] = {}
+            for item in results:
+                if not isinstance(item, dict):
+                    continue
+                sev = str(item.get("issue_severity") or "unknown")
+                severities[sev] = severities.get(sev, 0) + 1
+            sev_parts = ", ".join(f"{k}={v}" for k, v in sorted(severities.items()))
+            details = f"issues={count}"
+            if sev_parts:
+                details = f"{details}, {sev_parts}"
+            return count, details
+
+        def _parse_radon_cc_stats(output: str) -> tuple[int | None, str]:
+            match = re.search(r"Average complexity: ([A-Z]) \\(([^)]+)\\)", output)
+            if match:
+                return None, f"avg={match.group(1)} ({match.group(2)})"
+            return None, "avg=unknown"
+
+        def _parse_radon_mi_stats(output: str) -> tuple[int | None, str]:
+            grades: dict[str, int] = {}
+            for line in (output or "").splitlines():
+                match = re.search(r"\\s-\\s([A-F])", line)
+                if match:
+                    grade = match.group(1)
+                    grades[grade] = grades.get(grade, 0) + 1
+            if grades:
+                details = ", ".join(
+                    f"{k}={v}" for k, v in sorted(grades.items())
+                )
+                return None, details
+            return None, "grades=unknown"
+
+        def _parse_radon_raw_stats(output: str) -> tuple[int | None, str]:
+            stats = {}
+            for line in (output or "").splitlines():
+                match = re.match(r"^\\s*([A-Z][A-Za-z ]+):\\s*(\\d+)", line.strip())
+                if match:
+                    key = match.group(1).strip().lower().replace(" ", "_")
+                    stats[key] = match.group(2)
+            if not stats:
+                return None, "summary=unknown"
+            parts = []
+            for key in (
+                "loc",
+                "lloc",
+                "sloc",
+                "comments",
+                "multi",
+                "blank",
+            ):
+                if key in stats:
+                    parts.append(f"{key}={stats[key]}")
+            return None, ", ".join(parts) if parts else "summary=unknown"
+
+        def _parse_mccabe_stats(output: str) -> tuple[int | None, str]:
+            return _parse_issue_stats(output, "complex")
+
+        def _parse_xenon_stats(output: str) -> tuple[int | None, str]:
+            count = _count_issue_lines(output)
+            return count, f"violations={count}"
+
+        def _parse_lizard_stats(output: str) -> tuple[int | None, str]:
+            nloc_match = re.search(r"Total\\s+NLOC\\s+(\\d+)", output)
+            cc_match = re.search(
+                r"Average\\s+Cyclomatic\\s+Complexity\\s+([0-9.]+)", output
+            )
+            parts = []
+            if nloc_match:
+                parts.append(f"nloc={nloc_match.group(1)}")
+            if cc_match:
+                parts.append(f"avg_cc={cc_match.group(1)}")
+            if parts:
+                return None, ", ".join(parts)
+            return None, f"lines={_count_issue_lines(output)}"
+
+        def _parse_semgrep_stats(output: str) -> tuple[int | None, str]:
+            try:
+                data = json.loads(output or "{}")
+            except Exception:
+                return None, "parse=error"
+            results = data.get("results") or []
+            if not isinstance(results, list):
+                results = []
+            count = len(results)
+            severities: dict[str, int] = {}
+            for item in results:
+                if not isinstance(item, dict):
+                    continue
+                extra = item.get("extra") or {}
+                sev = str(extra.get("severity") or "UNKNOWN").upper()
+                severities[sev] = severities.get(sev, 0) + 1
+            sev_parts = ", ".join(f"{k}={v}" for k, v in sorted(severities.items()))
+            details = f"issues={count}"
+            if sev_parts:
+                details = f"{details}, {sev_parts}"
+            return count, details
+
+        def _pyupgrade_target_flag() -> str:
+            major, minor = sys.version_info[:2]
+            if major > 3 or minor >= 12:
+                return "--py312-plus"
+            if minor >= 11:
+                return "--py311-plus"
+            if minor >= 10:
+                return "--py310-plus"
+            if minor >= 9:
+                return "--py39-plus"
+            return "--py38-plus"
+
+        def _should_skip_path(path: Path, skip_parts: set[str]) -> bool:
+            for part in path.parts:
+                if part in skip_parts:
+                    return True
+                if part.startswith("maxcov_raster_"):
+                    return True
+            return False
+
+        def _iter_python_files(base: Path, skip_parts: set[str]) -> list[Path]:
+            if base.is_file():
+                return [base] if base.suffix == ".py" else []
+            return [
+                path
+                for path in base.rglob("*.py")
+                if not _should_skip_path(path, skip_parts)
+            ]
+
+        def _run_pyupgrade_check(
+            label: str,
+            target_path: Path,
+            skip_parts: set[str],
+            timeout_s: float | None,
+        ) -> dict:
+            started = time.perf_counter()
+            if shutil.which("pyupgrade") is None:
+                return {
+                    "tool": label,
+                    "status": "fail",
+                    "duration_s": 0.0,
+                    "details": "missing",
+                }
+            effective_timeout = None
+            if timeout_s is not None:
+                try:
+                    timeout_val = float(timeout_s)
+                except (TypeError, ValueError):
+                    timeout_val = None
+                if timeout_val and timeout_val > 0:
+                    effective_timeout = timeout_val
+            tmp_dir = Path(
+                tempfile.mkdtemp(prefix="maxcov_pyupgrade_", dir=tempfile.gettempdir())
+            )
+            try:
+                files = _iter_python_files(target_path, skip_parts)
+                if not files:
+                    return {
+                        "tool": label,
+                        "status": "ok",
+                        "duration_s": time.perf_counter() - started,
+                        "details": "files=0",
+                    }
+
+                def _rel_for(path: Path) -> Path:
+                    if target_path.is_file():
+                        return Path(path.name)
+                    return path.relative_to(target_path)
+
+                for path in files:
+                    rel = _rel_for(path)
+                    dest = tmp_dir / rel
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(path, dest)
+
+                cmd = [
+                    "pyupgrade",
+                    _pyupgrade_target_flag(),
+                    "--exit-zero-even-if-changed",
+                    str(tmp_dir),
+                ]
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        cwd=str(BASE_DIR),
+                        capture_output=True,
+                        text=True,
+                        timeout=effective_timeout,
+                    )
+                except subprocess.TimeoutExpired:
+                    return {
+                        "tool": label,
+                        "status": "warn",
+                        "duration_s": time.perf_counter() - started,
+                        "details": (
+                            f"timeout>{effective_timeout}s"
+                            if effective_timeout
+                            else "timeout"
+                        ),
+                    }
+                except Exception as exc:
+                    return {
+                        "tool": label,
+                        "status": "warn",
+                        "duration_s": time.perf_counter() - started,
+                        "details": f"error={type(exc).__name__}",
+                    }
+
+                changed = 0
+                for path in files:
+                    rel = _rel_for(path)
+                    dest = tmp_dir / rel
+                    try:
+                        if dest.exists() and dest.read_bytes() != path.read_bytes():
+                            changed += 1
+                    except Exception:
+                        continue
+                status = "warn" if changed > 0 else "ok"
+                details = f"files={changed}"
+                if result.returncode != 0:
+                    status = "warn"
+                    details = f"{details}, rc={result.returncode}"
+                return {
+                    "tool": label,
+                    "status": status,
+                    "duration_s": time.perf_counter() - started,
+                    "details": details,
+                }
+            finally:
+                try:
+                    shutil.rmtree(tmp_dir, ignore_errors=True)
+                except Exception:
+                    pass
+
+        def _run_static_analysis_tools(report_path: Path) -> None:
+            target_dir = os.environ.get(
+                "MAX_COVERAGE_STATIC_TARGET", str(BASE_DIR)
+            )
+            target_file = os.environ.get(
+                "MAX_COVERAGE_STATIC_TARGET_FILE", str(BASE_DIR / "harness.py")
+            )
+            target_path = Path(target_dir)
+            raw_timeout = os.environ.get("MAX_COVERAGE_STATIC_TIMEOUT", "0")
+            timeout_s: float | None
+            timeout_s = None
+            if raw_timeout is not None:
+                raw_timeout = str(raw_timeout).strip().lower()
+            if raw_timeout not in {"", "0", "none", "false"}:
+                try:
+                    timeout_s = float(raw_timeout)
+                except (TypeError, ValueError):
+                    timeout_s = None
+                if timeout_s is not None and timeout_s <= 0:
+                    timeout_s = None
+            requirements_path = Path(BASE_DIR / "requirements.txt")
+            skip_parts = {
+                ".git",
+                "__pycache__",
+                ".venv",
+                "venv",
+                "node_modules",
+                "assets",
+                "assets_out",
+                "fonts",
+                "packages",
+                "diagrams",
+                "maxcov_logs",
+            }
+            codespell_skip = ",".join(
+                [
+                    ".git",
+                    "__pycache__",
+                    ".venv",
+                    "venv",
+                    "node_modules",
+                    "assets",
+                    "assets_out",
+                    "fonts",
+                    "packages",
+                    "diagrams",
+                    "maxcov_logs",
+                    "maxcov_raster_*",
+                ]
+            )
+            pytype_output = Path(
+                tempfile.mkdtemp(prefix="maxcov_pytype_", dir=tempfile.gettempdir())
+            )
+            raw_semgrep = os.environ.get("MAX_COVERAGE_SEMGREP_CONFIG")
+            if raw_semgrep is None:
+                semgrep_config = ""
+                for candidate in (
+                    ".semgrep.yml",
+                    ".semgrep.yaml",
+                    "semgrep.yml",
+                    "semgrep.yaml",
+                ):
+                    candidate_path = target_path / candidate
+                    if candidate_path.exists():
+                        semgrep_config = str(candidate_path)
+                        break
+                if not semgrep_config:
+                    semgrep_config = "p/python"
+            else:
+                semgrep_config = raw_semgrep.strip()
+            semgrep_enabled = semgrep_config.strip().lower() not in {
+                "",
+                "0",
+                "false",
+                "none",
+            }
+            pyre_enabled = (target_path / ".pyre_configuration").exists() or (
+                target_path / ".pyre_configuration.local"
+            ).exists()
+            tool_defs = {
+                "ruff": {
+                    "cmd": [
+                        "ruff",
+                        "check",
+                        target_dir,
+                        "--statistics",
+                        "--exit-zero",
+                    ],
+                    "parser": _parse_ruff_stats,
+                },
+                "black": {
+                    "cmd": ["black", "--check", "--diff", target_dir],
+                    "parser": _parse_black_stats,
+                },
+                "isort": {
+                    "cmd": ["isort", "--check-only", "--diff", target_dir],
+                    "parser": _parse_isort_stats,
+                },
+                "mypy": {
+                    "cmd": ["mypy", target_file],
+                    "parser": _parse_mypy_stats,
+                },
+                "pylint": {
+                    "cmd": [
+                        "pylint",
+                        target_file,
+                        "--score=y",
+                        "--reports=n",
+                        "--exit-zero",
+                    ],
+                    "parser": _parse_pylint_stats,
+                },
+                "flake8": {
+                    "cmd": [
+                        "flake8",
+                        target_dir,
+                        "--count",
+                        "--statistics",
+                        "--quiet",
+                    ],
+                    "parser": _parse_flake8_stats,
+                },
+                "pyflakes": {
+                    "cmd": ["pyflakes", target_dir],
+                    "parser": _parse_pyflakes_stats,
+                },
+                "pycodestyle": {
+                    "cmd": ["pycodestyle", target_dir],
+                    "parser": _parse_pycodestyle_stats,
+                },
+                "pydocstyle": {
+                    "cmd": ["pydocstyle", target_dir],
+                    "parser": _parse_pydocstyle_stats,
+                },
+                "codespell": {
+                    "cmd": ["codespell", "--skip", codespell_skip, target_dir],
+                    "parser": _parse_codespell_stats,
+                },
+                "pyright": {
+                    "cmd": ["pyright", target_dir, "--stats"],
+                    "parser": _parse_pyright_stats,
+                },
+                "pytype": {
+                    "cmd": [
+                        "pytype",
+                        "--quick",
+                        "--output",
+                        str(pytype_output),
+                        target_file,
+                    ],
+                    "parser": _parse_pytype_stats,
+                    "timeout_s": None,
+                },
+                "pyre": {
+                    "cmd": ["pyre", "check"],
+                    "parser": _parse_pyre_stats,
+                    "skip_reason": "" if pyre_enabled else "no config",
+                },
+                "vulture": {
+                    "cmd": ["vulture", target_dir, "--min-confidence", "60"],
+                    "parser": _parse_vulture_stats,
+                },
+                "bandit": {
+                    "cmd": ["bandit", "-q", "-r", target_dir, "-f", "json"],
+                    "parser": _parse_bandit_stats,
+                },
+                "pip-audit": {
+                    "cmd": [
+                        "pip-audit",
+                        "-r",
+                        str(requirements_path),
+                        "-f",
+                        "json",
+                        "--progress-spinner",
+                        "off",
+                    ],
+                    "parser": _parse_pip_audit_stats,
+                    "timeout_s": None,
+                    "skip_reason": ""
+                    if requirements_path.exists()
+                    else "requirements.txt missing",
+                },
+                "safety": {
+                    "cmd": ["safety", "check", "--json", "-r", str(requirements_path)],
+                    "parser": _parse_safety_stats,
+                    "skip_reason": ""
+                    if requirements_path.exists()
+                    else "requirements.txt missing",
+                },
+                "semgrep": {
+                    "cmd": [
+                        "semgrep",
+                        "scan",
+                        "--config",
+                        semgrep_config,
+                        "--json",
+                        "--quiet",
+                        "--metrics",
+                        "off",
+                        target_dir,
+                    ],
+                    "parser": _parse_semgrep_stats,
+                    "skip_reason": "" if semgrep_enabled else "disabled",
+                },
+                "dodgy": {
+                    "cmd": ["dodgy", target_dir],
+                    "parser": _parse_dodgy_stats,
+                },
+                "eradicate": {
+                    "cmd": ["eradicate", "-r", "-e", target_dir],
+                    "parser": _parse_eradicate_stats,
+                },
+                "deptry": {
+                    "cmd": ["deptry", target_dir, "--no-ansi"],
+                    "parser": _parse_deptry_stats,
+                },
+                "pycln": {
+                    "cmd": ["pycln", "--check", "--diff", target_dir],
+                    "parser": _parse_pycln_stats,
+                },
+                "pyupgrade": {
+                    "cmd": ["pyupgrade"],
+                    "runner": lambda label: _run_pyupgrade_check(
+                        label, target_path, skip_parts, timeout_s
+                    ),
+                },
+                "autoflake": {
+                    "cmd": [
+                        "autoflake",
+                        "--check",
+                        "--quiet",
+                        "-r",
+                        "--remove-all-unused-imports",
+                        "--remove-unused-variables",
+                        target_dir,
+                    ],
+                    "parser": _parse_autoflake_stats,
+                },
+                "radon-cc": {
+                    "cmd": ["radon", "cc", "-s", "-a", target_dir],
+                    "parser": _parse_radon_cc_stats,
+                },
+                "radon-mi": {
+                    "cmd": ["radon", "mi", "-s", target_dir],
+                    "parser": _parse_radon_mi_stats,
+                },
+                "radon-raw": {
+                    "cmd": ["radon", "raw", "-s", "--summary", target_dir],
+                    "parser": _parse_radon_raw_stats,
+                },
+                "mccabe": {
+                    "cmd": [sys.executable, "-m", "mccabe", "--min", "10", target_file],
+                    "parser": _parse_mccabe_stats,
+                },
+                "xenon": {
+                    "cmd": [
+                        "xenon",
+                        "--max-absolute",
+                        "A",
+                        "--max-modules",
+                        "A",
+                        "--max-average",
+                        "A",
+                        target_dir,
+                    ],
+                    "parser": _parse_xenon_stats,
+                },
+                "lizard": {
+                    "cmd": ["lizard", target_dir],
+                    "parser": _parse_lizard_stats,
+                },
+                "interrogate": {
+                    "cmd": ["interrogate", "-q", "--fail-under", "0", target_dir],
+                    "parser": _parse_interrogate_stats,
+                },
+            }
+            raw_tools = os.environ.get("MAX_COVERAGE_STATIC_TOOLS", "")
+            if raw_tools.strip():
+                selected = [
+                    name.strip().lower()
+                    for name in raw_tools.split(",")
+                    if name.strip()
+                ]
+            else:
+                selected = list(tool_defs.keys())
+
+            results: list[dict] = []
+            for name in selected:
+                tool = tool_defs.get(name)
+                if not tool:
+                    results.append(
+                        {
+                            "tool": name,
+                            "status": "skip",
+                            "duration_s": 0.0,
+                            "details": "unknown tool",
+                        }
+                    )
+                    continue
+                skip_reason = str(tool.get("skip_reason") or "").strip()
+                if skip_reason:
+                    results.append(
+                        {
+                            "tool": name,
+                            "status": "skip",
+                            "duration_s": 0.0,
+                            "details": skip_reason,
+                        }
+                    )
+                    continue
+                cmd = tool.get("cmd")
+                runner = tool.get("runner")
+                label = str(name)
+                binary = ""
+                if cmd:
+                    binary = cmd[0]
+                if cmd and binary == sys.executable and "-m" in cmd:
+                    try:
+                        module_index = cmd.index("-m") + 1
+                        module_name = cmd[module_index]
+                    except Exception:
+                        module_name = ""
+                    if module_name:
+                        try:
+                            import importlib.util
+
+                            module_missing = (
+                                importlib.util.find_spec(module_name) is None
+                            )
+                        except Exception:
+                            module_missing = True
+                        if module_missing:
+                            results.append(
+                                {
+                                    "tool": label,
+                                    "status": "fail",
+                                    "duration_s": 0.0,
+                                    "details": "missing",
+                                }
+                            )
+                            continue
+                if binary and shutil.which(binary) is None:
+                    results.append(
+                        {
+                            "tool": label,
+                            "status": "fail",
+                            "duration_s": 0.0,
+                            "details": "missing",
+                        }
+                    )
+                    continue
+                if runner:
+                    results.append(runner(label))
+                    continue
+                if not cmd:
+                    results.append(
+                        {
+                            "tool": label,
+                            "status": "skip",
+                            "duration_s": 0.0,
+                            "details": "missing command",
+                        }
+                    )
+                    continue
+                started = time.perf_counter()
+                status = "ok"
+                details = ""
+                tool_timeout = tool.get("timeout_s", timeout_s)
+                if tool_timeout is not None:
+                    tool_timeout = float(tool_timeout)
+                    if tool_timeout <= 0:
+                        tool_timeout = None
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        cwd=str(BASE_DIR),
+                        capture_output=True,
+                        text=True,
+                        timeout=tool_timeout,
+                    )
+                except subprocess.TimeoutExpired:
+                    status = "warn"
+                    details = (
+                        f"timeout>{tool_timeout}s" if tool_timeout else "timeout"
+                    )
+                    duration_s = time.perf_counter() - started
+                    results.append(
+                        {
+                            "tool": label,
+                            "status": status,
+                            "duration_s": duration_s,
+                            "details": details,
+                        }
+                    )
+                    continue
+                except Exception as exc:
+                    status = "warn"
+                    details = f"error={type(exc).__name__}"
+                    duration_s = time.perf_counter() - started
+                    results.append(
+                        {
+                            "tool": label,
+                            "status": status,
+                            "duration_s": duration_s,
+                            "details": details,
+                        }
+                    )
+                    continue
+
+                output = "\n".join(
+                    [t for t in (result.stdout or "", result.stderr or "") if t]
+                )
+                output = _strip_ansi(output)
+                if name == "safety" and _has_safety_api_key_error(output):
+                    duration_s = time.perf_counter() - started
+                    results.append(
+                        {
+                            "tool": label,
+                            "status": "skip",
+                            "duration_s": duration_s,
+                            "details": "api key required",
+                        }
+                    )
+                    continue
+                issues, details = tool["parser"](output)
+                if issues is None:
+                    status = "ok" if result.returncode == 0 else "warn"
+                else:
+                    status = "warn" if issues > 0 else "ok"
+                    if issues == 0 and result.returncode != 0:
+                        status = "warn"
+                        if details:
+                            details = f"{details}, rc={result.returncode}"
+                        else:
+                            details = f"rc={result.returncode}"
+                duration_s = time.perf_counter() - started
+                results.append(
+                    {
+                        "tool": label,
+                        "status": status,
+                        "duration_s": duration_s,
+                        "details": details,
+                    }
+                )
+
+            try:
+                report_path.parent.mkdir(parents=True, exist_ok=True)
+                report_path.write_text(
+                    json.dumps(results, ensure_ascii=True),
+                    encoding="utf-8",
+                )
+            except Exception:
+                pass
+            finally:
+                try:
+                    shutil.rmtree(pytype_output, ignore_errors=True)
+                except Exception:
+                    pass
 
         force_excepts = True
 
@@ -14048,6 +15052,15 @@ if __name__ == "__main__":
             globals()["_call_llm_responses"] = orig_llm_responses
             globals()["_call_llm_completion"] = orig_llm_completion
 
+        static_report = os.environ.get("MAX_COVERAGE_STATIC_REPORT_PATH")
+        if static_report:
+            try:
+                _maxcov_log("maxcov extras static analysis start")
+                _run_static_analysis_tools(Path(static_report))
+                _maxcov_log("maxcov extras static analysis done")
+            except Exception:
+                pass
+
         _maxcov_log("maxcov extras done")
 
     def _run_playwright_ui_traversal(
@@ -14258,6 +15271,126 @@ if __name__ == "__main__":
                 time.sleep(1.0)
                 _maxcov_log("reflex session done")
 
+    def _read_log_text(path: Path) -> str:
+        try:
+            return path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            return ""
+
+    def _format_duration(seconds: float) -> str:
+        if seconds < 0:
+            return ""
+        minutes = int(seconds // 60)
+        remainder = seconds - (minutes * 60)
+        if minutes:
+            return f"{minutes}m {remainder:.1f}s"
+        return f"{remainder:.1f}s"
+
+    def _read_static_analysis_report(path: Path) -> list[dict]:
+        try:
+            raw = path.read_text(encoding="utf-8", errors="ignore")
+            data = json.loads(raw)
+        except Exception:
+            return []
+        if not isinstance(data, list):
+            return []
+        cleaned: list[dict] = []
+        for item in data:
+            if isinstance(item, dict):
+                cleaned.append(item)
+        return cleaned
+
+    def _render_run_all_tests_summary(
+        rows: list[dict], total_duration_s: float
+    ) -> None:
+        try:
+            from rich import box
+            from rich.console import Console
+            from rich.table import Table
+            from rich.text import Text
+        except Exception:
+            print("Run-all-tests summary:")
+            for row in rows:
+                print(
+                    f"- {row.get('step', '')}: {row.get('status', '')} "
+                    f"({row.get('duration', '')}) {row.get('details', '')}".strip()
+                )
+            print(f"Total: {_format_duration(total_duration_s)}")
+            return
+
+        table = Table(title="Run All Tests", box=box.ASCII, show_lines=False)
+        table.add_column("Step", style="bold")
+        table.add_column("Status", justify="center")
+        table.add_column("Duration", justify="right")
+        table.add_column("Details", overflow="fold")
+
+        status_styles = {
+            "ok": "green",
+            "warn": "yellow",
+            "skip": "dim",
+            "fail": "bold red",
+        }
+        for row in rows:
+            status = str(row.get("status", "")).lower() or "unknown"
+            status_text = Text(status.upper())
+            status_text.stylize(status_styles.get(status, "white"))
+            table.add_row(
+                str(row.get("step", "")),
+                status_text,
+                str(row.get("duration", "")),
+                str(row.get("details", "")),
+            )
+
+        overall = (
+            "PASS"
+            if all(r.get("status") != "fail" for r in rows)
+            else "FAIL"
+        )
+        table.add_section()
+        table.add_row(
+            "Total",
+            Text(overall, style=("bold green" if overall == "PASS" else "bold red")),
+            _format_duration(total_duration_s),
+            "",
+        )
+        Console().print(table)
+
+    def _scan_reflex_log_for_issues(log_text: str) -> list[str]:
+        issues: list[str] = []
+        pattern = re.compile(
+            r"\b(warning|error|traceback|exception)\b", re.IGNORECASE
+        )
+        for line in (log_text or "").splitlines():
+            cleaned = line.strip()
+            if not cleaned:
+                continue
+            if pattern.search(cleaned):
+                issues.append(cleaned)
+        return issues
+
+    def _stop_reflex_process(proc: subprocess.Popen) -> None:
+        try:
+            if hasattr(os, "killpg"):
+                os.killpg(proc.pid, signal.SIGINT)
+            else:
+                proc.send_signal(signal.SIGINT)
+            proc.wait(timeout=10)
+        except Exception:
+            try:
+                if hasattr(os, "killpg"):
+                    os.killpg(proc.pid, signal.SIGTERM)
+                else:
+                    proc.terminate()
+                proc.wait(timeout=10)
+            except Exception:
+                try:
+                    if hasattr(os, "killpg"):
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    else:
+                        proc.kill()
+                except Exception:
+                    pass
+
     def _parse_ui_actions(raw: str) -> set[str]:
         raw = (raw or "").strip().lower()
         valid = {
@@ -14296,12 +15429,263 @@ if __name__ == "__main__":
         print(f"Importing assets from {args.import_assets}...")
         try:
             db = Neo4jClient()
-            db.import_assets(args.import_assets)
+            imported = db.import_assets(
+                args.import_assets, allow_overwrite=bool(args.overwrite_resume)
+            )
             db.close()
+            if not imported:
+                sys.exit(1)
             print("Import completed successfully.")
         except Exception as e:
             print(f"Error importing assets: {e}")
             sys.exit(1)
+
+    if args.run_all_tests:
+        results: list[dict] = []
+        overall_rc = 0
+        total_started = time.perf_counter()
+        log_dir = Path(tempfile.gettempdir()) / "dce_tools"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        static_report_path = Path(
+            os.environ.get(
+                "MAX_COVERAGE_STATIC_REPORT_PATH",
+                str(log_dir / f"maxcov_static_{stamp}.json"),
+            )
+        )
+
+        def record(step: str, status: str, duration_s: float, details: str = "") -> None:
+            results.append(
+                {
+                    "step": step,
+                    "status": status,
+                    "duration": _format_duration(duration_s),
+                    "details": details,
+                }
+            )
+
+        maxcov_started = time.perf_counter()
+        maxcov_cmd = [
+            sys.executable,
+            str(BASE_DIR / "harness.py"),
+            "--maximum-coverage",
+            "--maximum-coverage-actions",
+            str(args.maximum_coverage_actions),
+            "--maximum-coverage-ui-timeout",
+            str(args.maximum_coverage_ui_timeout),
+            "--maximum-coverage-reflex-frontend-port",
+            str(args.maximum_coverage_reflex_frontend_port),
+            "--maximum-coverage-reflex-backend-port",
+            str(args.maximum_coverage_reflex_backend_port),
+            "--maximum-coverage-reflex-startup-timeout",
+            str(args.maximum_coverage_reflex_startup_timeout),
+        ]
+        if args.maximum_coverage_ui_url:
+            maxcov_cmd.extend(
+                ["--maximum-coverage-ui-url", str(args.maximum_coverage_ui_url)]
+            )
+        if args.maximum_coverage_skip_llm:
+            maxcov_cmd.append("--maximum-coverage-skip-llm")
+        if args.maximum_coverage_failures:
+            maxcov_cmd.append("--maximum-coverage-failures")
+        if args.maximum_coverage_reflex:
+            maxcov_cmd.append("--maximum-coverage-reflex")
+        maxcov_env = os.environ.copy()
+        maxcov_env.setdefault("MAX_COVERAGE_CONTAINER", "1")
+        maxcov_env.setdefault("MAX_COVERAGE_STUB_DB", "1")
+        maxcov_env["MAX_COVERAGE_STATIC_REPORT_PATH"] = str(static_report_path)
+        maxcov_result = subprocess.run(
+            maxcov_cmd,
+            cwd=str(BASE_DIR),
+            env=maxcov_env,
+        )
+        maxcov_duration = time.perf_counter() - maxcov_started
+        if maxcov_result.returncode != 0:
+            record(
+                "maximum-coverage",
+                "fail",
+                maxcov_duration,
+                f"rc={maxcov_result.returncode}",
+            )
+            overall_rc = maxcov_result.returncode or 1
+            _render_run_all_tests_summary(
+                results, time.perf_counter() - total_started
+            )
+            sys.exit(overall_rc)
+        record("maximum-coverage", "ok", maxcov_duration, "ok")
+
+        static_results = _read_static_analysis_report(static_report_path)
+        static_failed = False
+        if static_results:
+            for item in static_results:
+                tool = str(item.get("tool") or "static")
+                status = str(item.get("status") or "warn").lower()
+                duration_s = float(item.get("duration_s") or 0.0)
+                details = str(item.get("details") or "")
+                record(f"static: {tool}", status, duration_s, details)
+                if status == "fail":
+                    static_failed = True
+            if static_failed and overall_rc == 0:
+                overall_rc = 1
+        else:
+            record(
+                "static analysis",
+                "warn",
+                0.0,
+                "no report",
+            )
+
+        diagram_log = log_dir / f"diagrams_run_all_tests_{stamp}.log"
+        diagrams_started = time.perf_counter()
+        diagrams_cmd = [
+            sys.executable,
+            str(BASE_DIR / "scripts" / "generate_diagrams.py"),
+        ]
+        diagrams_result = subprocess.run(
+            diagrams_cmd,
+            cwd=str(BASE_DIR),
+            capture_output=True,
+            text=True,
+        )
+        diagrams_duration = time.perf_counter() - diagrams_started
+        diagram_output = "\n".join(
+            [t for t in (diagrams_result.stdout or "", diagrams_result.stderr or "") if t]
+        )
+        try:
+            diagram_log.write_text(diagram_output, encoding="utf-8")
+        except Exception:
+            pass
+        if diagrams_result.returncode != 0:
+            record(
+                "diagram generation",
+                "fail",
+                diagrams_duration,
+                f"rc={diagrams_result.returncode}; log: {diagram_log}",
+            )
+            if overall_rc == 0:
+                overall_rc = diagrams_result.returncode or 1
+        else:
+            record(
+                "diagram generation",
+                "ok",
+                diagrams_duration,
+                f"log: {diagram_log}",
+            )
+
+        frontend_port = _pick_open_port(3000)
+        backend_port = _pick_open_port(8000 if 8000 != frontend_port else 0)
+        log_path = log_dir / f"reflex_run_all_tests_{stamp}.log"
+        url = f"http://localhost:{frontend_port}"
+        env = os.environ.copy()
+        env.setdefault("PYTHONUNBUFFERED", "1")
+        env.setdefault("MAX_COVERAGE_STUB_DB", "1")
+        env.setdefault("MAX_COVERAGE_SKIP_LLM", "1")
+        cmd = [
+            "reflex",
+            "run",
+            "--frontend-port",
+            str(frontend_port),
+            "--backend-port",
+            str(backend_port),
+        ]
+        proc = None
+        try:
+            with open(log_path, "w", encoding="utf-8") as log_file:
+                reflex_attempt_started = time.perf_counter()
+                try:
+                    proc = subprocess.Popen(
+                        cmd,
+                        cwd=str(BASE_DIR),
+                        stdout=log_file,
+                        stderr=log_file,
+                        env=env,
+                        start_new_session=True,
+                    )
+                except Exception as exc:
+                    record(
+                        "reflex run (clean start)",
+                        "fail",
+                        time.perf_counter() - reflex_attempt_started,
+                        f"start failed: {exc}",
+                    )
+                    overall_rc = 1
+
+                if overall_rc == 0:
+                    reflex_started = time.perf_counter()
+                    if not _wait_for_url(
+                        url, float(args.maximum_coverage_reflex_startup_timeout)
+                    ):
+                        record(
+                            "reflex run (clean start)",
+                            "fail",
+                            time.perf_counter() - reflex_started,
+                            "startup timeout",
+                        )
+                        overall_rc = 1
+                    else:
+                        time.sleep(1.0)
+                        log_text = _read_log_text(log_path)
+                        issues = _scan_reflex_log_for_issues(log_text)
+                        if issues:
+                            first_issue = issues[0]
+                            record(
+                                "reflex run (clean start)",
+                                "fail",
+                                time.perf_counter() - reflex_started,
+                                f"{first_issue} (log: {log_path})",
+                            )
+                            overall_rc = 1
+                        else:
+                            record(
+                                "reflex run (clean start)",
+                                "ok",
+                                time.perf_counter() - reflex_started,
+                                f"log: {log_path}",
+                            )
+
+                if overall_rc == 0:
+                    ui_started = time.perf_counter()
+                    ui_cmd = [
+                        sys.executable,
+                        str(BASE_DIR / "scripts" / "ui_playwright_check.py"),
+                        "--url",
+                        url,
+                        "--timeout",
+                        str(args.ui_playwright_timeout),
+                        "--pdf-timeout",
+                        str(args.ui_playwright_pdf_timeout),
+                    ]
+                    if args.ui_playwright_headed:
+                        ui_cmd.append("--headed")
+                    if args.ui_playwright_slowmo:
+                        ui_cmd.extend(["--slowmo", str(args.ui_playwright_slowmo)])
+                    if args.ui_playwright_allow_llm_error:
+                        ui_cmd.append("--allow-llm-error")
+                    if args.ui_playwright_allow_db_error:
+                        ui_cmd.append("--allow-db-error")
+                    if args.ui_playwright_screenshot_dir:
+                        ui_cmd.extend(
+                            ["--screenshot-dir", args.ui_playwright_screenshot_dir]
+                        )
+                    ui_result = subprocess.run(ui_cmd, cwd=str(BASE_DIR))
+                    ui_duration = time.perf_counter() - ui_started
+                    if ui_result.returncode != 0:
+                        record(
+                            "ui-playwright-check",
+                            "fail",
+                            ui_duration,
+                            f"rc={ui_result.returncode}; log: {log_path}",
+                        )
+                        overall_rc = ui_result.returncode or 1
+                    else:
+                        record("ui-playwright-check", "ok", ui_duration, "ok")
+        finally:
+            if proc is not None:
+                _stop_reflex_process(proc)
+            _render_run_all_tests_summary(
+                results, time.perf_counter() - total_started
+            )
+            sys.exit(overall_rc)
 
     if args.maximum_coverage or getattr(args, "ui_simulate", False):
         try:

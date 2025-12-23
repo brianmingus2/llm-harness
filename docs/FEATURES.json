@@ -1,0 +1,51 @@
+[
+  {
+    "id": "REQ-009",
+    "statement": "Replace brian_mingus_resume.json with michael_scott_resume.json and update default asset references.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T11:44:16Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  },
+  {
+    "id": "REQ-010",
+    "statement": "Seed full Michael Scott + David Brent resume data to exercise the resume builder (profile, skills, experience, education, founder roles, custom sections) using ASCII-only content.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T11:44:16Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  },
+  {
+    "id": "REQ-011",
+    "statement": "Ensure asset imports via CLI are safe for real users (no overwrite without explicit override) and document the import workflow.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T11:44:16Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  },
+  {
+    "id": "REQ-012",
+    "statement": "Keep dev/test runs isolated from user data (ephemeral or stub DB for test flows).",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T11:44:16Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  },
+  {
+    "id": "REQ-013",
+    "statement": "Run python harness.py --run-all-tests and record results for the new resume asset changes.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T11:44:16Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  },
+  {
+    "id": "REQ-014",
+    "statement": "Compile the Michael Scott resume PDF using a stubbed DB and perform a vision review of the rendered output.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T11:53:38Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  },
+  {
+    "id": "REQ-015",
+    "statement": "Ensure long resume names render on a single line in Typst by adjusting header layout and layering.",
+    "status": "passing",
+    "evidence": "docs/TEST_LOG.md (2025-12-23T12:20:44Z)",
+    "tests": ["python harness.py --run-all-tests"]
+  }
+]
