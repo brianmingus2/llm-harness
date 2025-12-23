@@ -1,0 +1,11 @@
+[conf]
+default-lang = "en"
+
+[lang.en]
+resume = "Résumé"
+dear = "Dear"
+cover-letter = "Cover Letter"
+attached = "Attached"
+curriculum-vitae = "Curriculum Vitae"
+sincerely = "Sincerely"
+letter-position-pretext = "Job Application for"

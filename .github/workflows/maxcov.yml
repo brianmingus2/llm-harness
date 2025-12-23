@@ -1,0 +1,26 @@
+name: maxcov
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  maxcov:
+    name: maxcov
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run maximum coverage container
+        env:
+          MAX_COVERAGE_LOG: "1"
+        run: ./scripts/run_maxcov.sh

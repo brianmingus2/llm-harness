@@ -1,0 +1,81 @@
+.states
+.coverage
+*.db
+.web
+# Gitignore for ResumeBuilder3_bck
+
+# Reflex state and build artifacts
+.states/
+.web/
+__pycache__/
+assets_out/
+maxcov_logs/
+
+# Python bytecode
+*.py[cod]
+
+# Generated assets
+assets/external/
+assets/resume.pdf
+assets/preview.pdf
+assets/preview.sig
+assets/*.png
+assets/*.pdf
+assets/tmp*.pdf
+assets/tmp*.typ
+assets/debug.typ
+debug.log
+reflex.db
+
+# Vendored bundles
+fa/
+Font.Awesome.Pro.v6.5.1-Aetherx/
+packages/
+fonts/Font Awesome 7*.otf
+
+# Temporary files created by the agent or during development
+.env
+.env.*
+.tmp_*.png
+.tmp_*.typ
+.tmp_*.pdf
+.tmp_typst/
+cc.txt
+diff.patch
+dummy_app.py
+evaluation_req_*.json
+generate_typst_source_broken.py
+generate_typst_source_broken.py~
+generate_typst_source_fixed.py
+generate_typst_source_incremental.py
+generate_typst_source.py~
+harness_new_func.py
+harness_new_func_3.py
+harness_new_func_final.py
+harness_new_func_part1.py
+harness_test_write.py
+hm.txt
+hm_bck.txt
+new_code.py
+patch_harness.py
+profile.json
+prompt_old.txt
+prompt_updated.txt
+req*.txt
+!requirements.txt
+research_output_*.txt
+results/
+restore_harness.py
+run.log
+run_debug.log
+run_new.log
+skills.json
+step1_update_signature.py
+step2_update_typst_code.py
+table_demo.pdf
+table_demo.typ
+test.txt
+test_any_llm_gemini.py
+test_import.py
+test_granian.py
+updated_prompt_from_hm.txt
