@@ -593,6 +593,20 @@ def _sanitize_section_order(
     return ordered
 
 
+def _filter_section_order(
+    raw_order: list[str] | None, extra_keys: list[str] | None = None
+) -> list[str]:
+    """Filter a section order list to known keys without appending defaults."""
+    known_keys = _known_section_keys(extra_keys)
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for key in raw_order or []:
+        if key in known_keys and key not in seen:
+            ordered.append(key)
+            seen.add(key)
+    return ordered
+
+
 def _normalize_section_enabled(
     raw,
     default: list[str] | None = None,
@@ -3024,7 +3038,10 @@ def generate_typst_source(
     }
     sections.update(custom_blocks)
 
-    resolved_order = _sanitize_section_order(section_order, custom_section_keys)
+    if section_order is None:
+        resolved_order = _sanitize_section_order(section_order, custom_section_keys)
+    else:
+        resolved_order = _filter_section_order(section_order, custom_section_keys)
     for section_key in resolved_order:
         block = sections.get(section_key, "")
         if block:
