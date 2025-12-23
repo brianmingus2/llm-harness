@@ -135,78 +135,8 @@
   "deploy_keys": [],
   "tag_protection": [],
   "custom_properties": [],
-  "rulesets": [
-    {
-      "name": "main-branch-ruleset",
-      "target": "branch",
-      "enforcement": "active",
-      "conditions": {
-        "ref_name": {
-          "include": ["~DEFAULT_BRANCH"],
-          "exclude": []
-        }
-      },
-      "rules": [
-        {
-          "type": "pull_request",
-          "parameters": {
-            "allowed_merge_methods": ["squash", "rebase"],
-            "dismiss_stale_reviews_on_push": true,
-            "require_code_owner_review": true,
-            "require_last_push_approval": false,
-            "required_approving_review_count": 1,
-            "required_review_thread_resolution": true
-          }
-        },
-        {
-          "type": "required_status_checks",
-          "parameters": {
-            "do_not_enforce_on_create": true,
-            "required_status_checks": [
-              {
-                "context": "maxcov / maxcov"
-              }
-            ],
-            "strict_required_status_checks_policy": true
-          }
-        },
-        {
-          "type": "required_linear_history"
-        },
-        {
-          "type": "required_signatures"
-        },
-        {
-          "type": "non_fast_forward"
-        }
-      ]
-    }
-  ],
-  "branch_protection": {
-    "branch": "main",
-    "required_status_checks": {
-      "strict": true,
-      "contexts": [
-        "maxcov / maxcov"
-      ]
-    },
-    "enforce_admins": true,
-    "required_pull_request_reviews": {
-      "required_approving_review_count": 1,
-      "dismiss_stale_reviews": true,
-      "require_code_owner_reviews": true,
-      "require_last_push_approval": false
-    },
-    "restrictions": null,
-    "required_linear_history": true,
-    "allow_force_pushes": false,
-    "allow_deletions": false,
-    "block_creations": false,
-    "required_conversation_resolution": true,
-    "lock_branch": false,
-    "allow_fork_syncing": true,
-    "required_signatures": true
-  },
+  "rulesets": [],
+  "branch_protection": null,
   "environments": [
     {
       "name": "production",
