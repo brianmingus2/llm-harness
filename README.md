@@ -1,7 +1,7 @@
 # llm-harness
 
-This repository is an LLM engineering harness for long-run autonomy. It is intentionally
-named like a resume builder but the real mission is to facilitate the design,
+This repository is an LLM engineering harness for long-run autonomy. It began as
+a resume builder but the real mission is to facilitate the design,
 training, and testing of LLM agents that must operate reliably for hours, days,
 weeks, or longer without human intervention. The harness emphasizes strict
 verification, high test coverage, and structured process control so that agents
